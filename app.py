@@ -10,10 +10,10 @@ MODEL_DIR = "models"
 
 # Dictionary of your models and their Google Drive file IDs (replace with your actual IDs)
 MODEL_FILE_IDS = {
-    "SVM": "your_svm_model_file_id",
-    "Random Forest": "your_rf_model_file_id",
-    "Logistic Regression": "your_logistic_model_file_id",
-    "Naive Bayes": "your_nb_model_file_id"
+    "SVM": "1vlYNNMCaQSTevg4hAuzW7MNCz5VCv1Po",
+    "Random Forest": "1E2F4hLMkTRKYrki0mV6-18AJ6L22rRsh",
+    "Logistic Regression": "1uKkiWoHFaWTU-Rkm7c4NJ661_i8ZcreW",
+    "Naive Bayes": "1zDczUC9fCl_kSWQ5iIsgLwclRLXiqvJG"
 }
 
 def download_model(file_id, destination):
