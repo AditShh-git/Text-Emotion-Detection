@@ -8,7 +8,6 @@ import requests
 
 MODEL_DIR = "models"
 
-# Dictionary of your models and their Google Drive file IDs (replace with your actual IDs)
 MODEL_FILE_IDS = {
     "SVM": "1vlYNNMCaQSTevg4hAuzW7MNCz5VCv1Po",
     "Random Forest": "1E2F4hLMkTRKYrki0mV6-18AJ6L22rRsh",
@@ -16,31 +15,28 @@ MODEL_FILE_IDS = {
     "Naive Bayes": "1zDczUC9fCl_kSWQ5iIsgLwclRLXiqvJG"
 }
 
-def download_file_from_google_drive(file_id, destination):
-    URL = "https://docs.google.com/uc?export=download"
+def download_model(file_id, destination):
+    url = "https://drive.google.com/uc"
     session = requests.Session()
+    try:
+        response = session.get(url, params={'id': file_id}, stream=True)
+        response.raise_for_status()
+    except requests.exceptions.SSLError:
+        st.error(
+            "SSL Error: Cannot verify the server's SSL certificate.\n"
+            "Try updating your Python certificates or download the model manually."
+        )
+        return False
+    except requests.exceptions.RequestException as e:
+        st.error(f"Failed to download model: {e}")
+        return False
 
-    response = session.get(URL, params={'id': file_id}, stream=True)
-    token = get_confirm_token(response)
-
-    if token:
-        params = {'id': file_id, 'confirm': token}
-        response = session.get(URL, params=params, stream=True)
-
-    save_response_content(response, destination)
-
-def get_confirm_token(response):
-    for key, value in response.cookies.items():
-        if key.startswith('download_warning'):
-            return value
-    return None
-
-def save_response_content(response, destination):
-    CHUNK_SIZE = 32768
-    with open(destination, "wb") as f:
-        for chunk in response.iter_content(CHUNK_SIZE):
-            if chunk:  # filter out keep-alive chunks
+    # Write to file in chunks
+    with open(destination, 'wb') as f:
+        for chunk in response.iter_content(32768):
+            if chunk:
                 f.write(chunk)
+    return True
 
 def load_models():
     if not os.path.exists(MODEL_DIR):
@@ -51,10 +47,14 @@ def load_models():
         model_path = os.path.join(MODEL_DIR, f"pipe_{model_name.replace(' ', '_').lower()}.pkl")
         if not os.path.exists(model_path):
             st.info(f"Downloading {model_name} model...")
-            try:
-                download_file_from_google_drive(file_id, model_path)
-            except Exception as e:
-                st.error(f"Failed to download {model_name} model: {e}")
+            success = download_model(file_id, model_path)
+            if not success:
+                st.error(
+                    f"Could not download {model_name} model automatically.\n"
+                    f"Please download it manually from:\n"
+                    f"https://drive.google.com/file/d/{file_id}/view?usp=sharing\n"
+                    f"and place it here:\n{model_path}"
+                )
                 continue
         try:
             models[model_name] = joblib.load(model_path)
