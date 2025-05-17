@@ -10,7 +10,7 @@ MODEL_DIR = "models"
 
 MODEL_FILE_IDS = {
     "SVM": "1vlYNNMCaQSTevg4hAuzW7MNCz5VCv1Po",
-    "Random Forest": "1E2F4hLMkTRKYrki0mV6-18AJ6L22rRsh",
+    # "Random Forest": "1E2F4hLMkTRKYrki0mV6-18AJ6L22rRsh",
     "Logistic Regression": "1uKkiWoHFaWTU-Rkm7c4NJ661_i8ZcreW",
     "Naive Bayes": "1zDczUC9fCl_kSWQ5iIsgLwclRLXiqvJG"
 }
