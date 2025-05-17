@@ -4,16 +4,42 @@ import numpy as np
 import altair as alt
 import joblib
 import os
+import requests
 
 MODEL_DIR = "models"
 
-def load_models(model_dir=MODEL_DIR):
-    loaded_models = {}
-    for file in os.listdir(model_dir):
-        if file.endswith(".pkl"):
-            model_name = file.replace("pipe_", "").replace(".pkl", "").replace("_", " ").title()
-            loaded_models[model_name] = joblib.load(os.path.join(model_dir, file))
-    return loaded_models
+# Dictionary of your models and their Google Drive file IDs (replace with your actual IDs)
+MODEL_FILE_IDS = {
+    "SVM": "your_svm_model_file_id",
+    "Random Forest": "your_rf_model_file_id",
+    "Logistic Regression": "your_logistic_model_file_id",
+    "Naive Bayes": "your_nb_model_file_id"
+}
+
+def download_model(file_id, destination):
+    url = f"https://drive.google.com/uc?id={file_id}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        with open(destination, 'wb') as f:
+            f.write(response.content)
+        return True
+    return False
+
+def load_models():
+    if not os.path.exists(MODEL_DIR):
+        os.makedirs(MODEL_DIR)
+
+    models = {}
+    for model_name, file_id in MODEL_FILE_IDS.items():
+        model_path = os.path.join(MODEL_DIR, f"pipe_{model_name.replace(' ', '_').lower()}.pkl")
+        if not os.path.exists(model_path):
+            st.info(f"Downloading {model_name} model...")
+            success = download_model(file_id, model_path)
+            if not success:
+                st.error(f"Failed to download {model_name} model.")
+                continue
+        models[model_name] = joblib.load(model_path)
+    return models
 
 models = load_models()
 
