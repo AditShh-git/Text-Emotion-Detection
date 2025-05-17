@@ -16,14 +16,31 @@ MODEL_FILE_IDS = {
     "Naive Bayes": "1zDczUC9fCl_kSWQ5iIsgLwclRLXiqvJG"
 }
 
-def download_model(file_id, destination):
-    url = f"https://drive.google.com/uc?id={file_id}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        with open(destination, 'wb') as f:
-            f.write(response.content)
-        return True
-    return False
+def download_file_from_google_drive(file_id, destination):
+    URL = "https://docs.google.com/uc?export=download"
+    session = requests.Session()
+
+    response = session.get(URL, params={'id': file_id}, stream=True)
+    token = get_confirm_token(response)
+
+    if token:
+        params = {'id': file_id, 'confirm': token}
+        response = session.get(URL, params=params, stream=True)
+
+    save_response_content(response, destination)
+
+def get_confirm_token(response):
+    for key, value in response.cookies.items():
+        if key.startswith('download_warning'):
+            return value
+    return None
+
+def save_response_content(response, destination):
+    CHUNK_SIZE = 32768
+    with open(destination, "wb") as f:
+        for chunk in response.iter_content(CHUNK_SIZE):
+            if chunk:  # filter out keep-alive chunks
+                f.write(chunk)
 
 def load_models():
     if not os.path.exists(MODEL_DIR):
@@ -34,11 +51,15 @@ def load_models():
         model_path = os.path.join(MODEL_DIR, f"pipe_{model_name.replace(' ', '_').lower()}.pkl")
         if not os.path.exists(model_path):
             st.info(f"Downloading {model_name} model...")
-            success = download_model(file_id, model_path)
-            if not success:
-                st.error(f"Failed to download {model_name} model.")
+            try:
+                download_file_from_google_drive(file_id, model_path)
+            except Exception as e:
+                st.error(f"Failed to download {model_name} model: {e}")
                 continue
-        models[model_name] = joblib.load(model_path)
+        try:
+            models[model_name] = joblib.load(model_path)
+        except Exception as e:
+            st.error(f"Error loading {model_name} model: {e}")
     return models
 
 models = load_models()
